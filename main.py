@@ -7,11 +7,12 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 BASE_DIR = Path(__file__).parent
-STORAGE_DIR = BASE_DIR / "storage"
+TEMPLATES_DIR = BASE_DIR / 'templates'
+STORAGE_DIR = BASE_DIR / 'storage'
 STORAGE_DIR.mkdir(exist_ok=True)
-DATA_FILE = STORAGE_DIR / "data.json"
+DATA_FILE = STORAGE_DIR / 'data.json'
 
-jinja = Environment(loader=FileSystemLoader(BASE_DIR / "templates"))
+jinja = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
@@ -25,7 +26,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             case '/read':
                 self.render_template('read.jinja')
             case _:
-                file = (BASE_DIR / route.path[1:]).resolve()
+                file = (BASE_DIR / route.path.lstrip('/')).resolve()
                 if BASE_DIR in file.parents and file.exists():
                     self.send_static(file)
                 else:
@@ -74,7 +75,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(content.encode())
 
     def send_html_file(self, filename, status=200):
-        file_path = BASE_DIR / filename
+        file_path = TEMPLATES_DIR / filename
         if not file_path.exists():
             self.send_error(404, "File not found")
             return
@@ -89,7 +90,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     def send_static(self, filename, status=200):
         self.send_response(status)
 
-        mime_type, *_ = mimetypes.guess_type(filename)
+        mime_type, _ = mimetypes.guess_type(filename)
         self.send_header('Content-type', mime_type or 'text/plain')
         self.end_headers()
 
